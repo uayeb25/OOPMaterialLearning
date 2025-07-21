@@ -104,6 +104,11 @@ function App() {
       title: 'Detalles de Bundle',
       description: 'Pipeline para obtener información completa de productos en un bundle',
       totalSlides: 8
+    },
+    'catalog-type-validation': {
+      title: 'Validación de Tipo de Catálogo',
+      description: 'Pipeline para validar tipos de catálogo con $match y $project',
+      totalSlides: 6
     }
   }
 
@@ -213,6 +218,17 @@ function App() {
                 {currentSlide === 5 && <BundleDetailsUnwindStepSlide />}
                 {currentSlide === 6 && <BundleDetailsProjectStepSlide />}
                 {currentSlide === 7 && <BundleDetailsFinalResultSlide />}
+              </>
+            )}
+
+            {currentExercise === 'catalog-type-validation' && (
+              <>
+                {currentSlide === 0 && <CatalogTypeIntroSlide />}
+                {currentSlide === 1 && <CatalogTypeDataSlide />}
+                {currentSlide === 2 && <CatalogTypeMatchStepSlide />}
+                {currentSlide === 3 && <CatalogTypeProjectStepSlide />}
+                {currentSlide === 4 && <CatalogTypeResultSlide />}
+                {currentSlide === 5 && <CatalogTypeUsageSlide />}
               </>
             )}
           </motion.div>
@@ -1342,6 +1358,566 @@ const BundleDetailsFinalResultSlide = () => (
       transition={{ delay: 0.7 }}
     >
       <p>🎯 ¡Perfecto! Ahora tenemos toda la información de los productos del bundle en un formato claro y estructurado.</p>
+    </motion.div>
+  </div>
+)
+
+// ======================================
+// CATALOG TYPE VALIDATION SLIDES
+// ======================================
+
+const CatalogTypeIntroSlide = () => (
+  <div className="slide-content">
+    <motion.h1 
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.8 }}
+    >
+      🔍 Validación de Tipo de Catálogo
+    </motion.h1>
+    
+    <motion.div 
+      className="intro-content"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.8 }}
+    >
+      <h2>🎯 Objetivo del Pipeline</h2>
+      <p>Validar que un tipo de catálogo existe y está activo usando operaciones básicas de MongoDB Aggregation.</p>
+      
+      <div className="pipeline-preview">
+        <h3>📝 Pipeline a Implementar:</h3>
+        <div className="code-block">
+          <span className="comment"># Pipeline para validar catalog_type</span><br/>
+          <span className="bracket">[</span><br/>
+          <span className="indent">{`{"$match": {"_id": "ObjectId", "active": true}}`}</span><br/>
+          <span className="indent">{`{"$project": {"id": {"$toString": "$_id"}, "description": 1, "active": 1}}`}</span><br/>
+          <span className="bracket">]</span>
+        </div>
+      </div>
+
+      <div className="use-case">
+        <h3>🏪 Caso de Uso Real:</h3>
+        <p>Antes de crear un nuevo catálogo, necesitamos validar que el tipo de catálogo al que pertenece existe y está activo.</p>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const CatalogTypeDataSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      📊 Datos de Entrada - Colección "catalogtypes"
+    </motion.h2>
+
+    <motion.div 
+      className="collections-container"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <div className="collection">
+        <h3>📁 catalogtypes Collection</h3>
+        <div className="documents">
+          <div className="document">
+            <div className="doc-header">Document 1</div>
+            <div className="field">_id: ObjectId("507f1f77bcf86cd799439001")</div>
+            <div className="field">description: "bundle"</div>
+            <div className="field success">active: true</div>
+          </div>
+          
+          <div className="document">
+            <div className="doc-header">Document 2</div>
+            <div className="field">_id: ObjectId("507f1f77bcf86cd799439002")</div>
+            <div className="field">description: "product"</div>
+            <div className="field success">active: true</div>
+          </div>
+
+          <div className="document">
+            <div className="doc-header">Document 3</div>
+            <div className="field">_id: ObjectId("507f1f77bcf86cd799439003")</div>
+            <div className="field">description: "service"</div>
+            <div className="field error">active: false</div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="input-info"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>🔍 Parámetro de Entrada:</h3>
+      <div className="input-example">
+        <strong>catalog_type_id:</strong> "507f1f77bcf86cd799439001"
+      </div>
+      <p>Queremos validar que este ID corresponde a un tipo de catálogo activo.</p>
+    </motion.div>
+  </div>
+)
+
+const CatalogTypeMatchStepSlide = () => {
+  const [currentStep, setCurrentStep] = useState(0)
+  const [isAnimating, setIsAnimating] = useState(false)
+
+  const documents = [
+    {
+      id: "507f1f77bcf86cd799439001",
+      description: "bundle",
+      active: true,
+      matches: true
+    },
+    {
+      id: "507f1f77bcf86cd799439002", 
+      description: "product",
+      active: true,
+      matches: false
+    },
+    {
+      id: "507f1f77bcf86cd799439003",
+      description: "service", 
+      active: false,
+      matches: false
+    }
+  ]
+
+  const targetId = "507f1f77bcf86cd799439001"
+
+  const startAnimation = () => {
+    setIsAnimating(true)
+    setCurrentStep(0)
+    
+    const interval = setInterval(() => {
+      setCurrentStep(prev => {
+        if (prev >= documents.length) {
+          clearInterval(interval)
+          setIsAnimating(false)
+          return prev
+        }
+        return prev + 1
+      })
+    }, 2000)
+  }
+
+  const resetAnimation = () => {
+    setCurrentStep(0)
+    setIsAnimating(false)
+  }
+
+  return (
+    <div className="slide-content">
+      <motion.h2 
+        initial={{ y: -30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+      >
+        🎯 Paso 1: $match - Filtrar Documento
+      </motion.h2>
+
+      <motion.div 
+        className="step-explanation"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <h3>🔍 ¿Qué hace $match?</h3>
+        <p>Recorre cada documento y evalúa si cumple TODOS los criterios especificados.</p>
+        
+        <div className="operation-demo">
+          <h4>📝 Criterios de Filtrado:</h4>
+          <div className="criteria-box">
+            <div className="criterion">
+              <span className="criterion-label">ID específico:</span>
+              <span className="criterion-value">ObjectId("{targetId}")</span>
+            </div>
+            <div className="criterion">
+              <span className="criterion-label">Estado activo:</span>
+              <span className="criterion-value">true</span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div 
+        className="animated-filter-demo"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <div className="animation-controls">
+          <button 
+            className="btn btn-primary" 
+            onClick={startAnimation}
+            disabled={isAnimating}
+          >
+            {isAnimating ? "🔄 Procesando..." : "▶️ Iniciar Evaluación"}
+          </button>
+          <button 
+            className="btn btn-secondary" 
+            onClick={resetAnimation}
+            disabled={isAnimating}
+          >
+            🔄 Reiniciar
+          </button>
+        </div>
+
+        <div className="evaluation-process">
+          <h3>🔄 Proceso de Evaluación:</h3>
+          
+          <div className="documents-evaluation">
+            {documents.map((doc, index) => (
+              <motion.div 
+                key={index}
+                className={`document-eval ${
+                  currentStep > index ? (doc.matches ? 'matched' : 'rejected') : 
+                  currentStep === index ? 'evaluating' : 'pending'
+                }`}
+                initial={{ opacity: 0.5, scale: 0.95 }}
+                animate={{ 
+                  opacity: currentStep >= index ? 1 : 0.5,
+                  scale: currentStep === index ? 1.05 : 1,
+                  border: currentStep === index ? '3px solid #ffd700' : '1px solid #ddd'
+                }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="doc-header">
+                  <span className="doc-title">Documento {index + 1}</span>
+                  {currentStep > index && (
+                    <span className={`result-icon ${doc.matches ? 'success' : 'error'}`}>
+                      {doc.matches ? '✅' : '❌'}
+                    </span>
+                  )}
+                  {currentStep === index && (
+                    <span className="evaluating-icon">🔍</span>
+                  )}
+                </div>
+                
+                <div className="doc-content">
+                  <div className="field">
+                    <span className="field-label">_id:</span>
+                    <span className={`field-value ${
+                      currentStep > index ? 
+                        (doc.id === targetId ? 'match' : 'no-match') : ''
+                    }`}>
+                      ...{doc.id.slice(-6)}
+                    </span>
+                    {currentStep > index && (
+                      <span className="eval-result">
+                        {doc.id === targetId ? '✓' : '✗'}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="field">
+                    <span className="field-label">active:</span>
+                    <span className={`field-value ${
+                      currentStep > index ? 
+                        (doc.active ? 'match' : 'no-match') : ''
+                    }`}>
+                      {doc.active.toString()}
+                    </span>
+                    {currentStep > index && (
+                      <span className="eval-result">
+                        {doc.active ? '✓' : '✗'}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="field">
+                    <span className="field-label">description:</span>
+                    <span className="field-value">"{doc.description}"</span>
+                  </div>
+                </div>
+
+                {currentStep > index && (
+                  <motion.div 
+                    className="evaluation-summary"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <div className={`eval-verdict ${doc.matches ? 'pass' : 'fail'}`}>
+                      {doc.matches ? 
+                        '🎯 PASA el filtro - Ambos criterios cumplen' : 
+                        '🚫 NO pasa el filtro - Al menos un criterio falla'
+                      }
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {currentStep > documents.length && (
+            <motion.div 
+              className="final-result-summary"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <h4>� Resultado Final del $match:</h4>
+              <div className="final-match-result">
+                <div className="matched-docs">
+                  <strong>✅ Documentos que PASARON:</strong> 1
+                  <div className="matched-doc">
+                    _id: ...439001, description: "bundle", active: true
+                  </div>
+                </div>
+                <div className="rejected-docs">
+                  <strong>❌ Documentos RECHAZADOS:</strong> 2
+                  <div className="reason">• Documento 2: ID diferente</div>
+                  <div className="reason">• Documento 3: ID diferente</div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+const CatalogTypeProjectStepSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🎨 Paso 2: $project - Dar Formato a la Salida
+    </motion.h2>
+
+    <motion.div 
+      className="step-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <h3>🎯 ¿Qué hace $project?</h3>
+      <p>Reformatea los documentos seleccionando campos específicos y aplicando transformaciones.</p>
+      
+      <div className="operation-demo">
+        <h4>📝 Operación:</h4>
+        <div className="code-block">
+          <span className="bracket">{`{`}</span><br/>
+          <span className="indent">{`"$project": {`}</span><br/>
+          <span className="indent2">{`"id": {"$toString": "$_id"},`}</span><br/>
+          <span className="indent2">{`"description": "$description",`}</span><br/>
+          <span className="indent2">{`"active": "$active"`}</span><br/>
+          <span className="indent">{`}`}</span><br/>
+          <span className="bracket">{`}`}</span>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="transformation-demo"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>🔄 Transformación de Datos:</h3>
+      
+      <div className="transformation-process">
+        <div className="input-format">
+          <h4>📥 Documento del $match:</h4>
+          <div className="doc-structure">
+            <div className="field">_id: ObjectId("507f1f77bcf86cd799439001")</div>
+            <div className="field">description: "bundle"</div>
+            <div className="field">active: true</div>
+          </div>
+        </div>
+
+        <div className="arrow">→</div>
+
+        <div className="output-format">
+          <h4>📤 Resultado del $project:</h4>
+          <div className="doc-structure">
+            <div className="field transformed">id: "507f1f77bcf86cd799439001" ← String</div>
+            <div className="field">description: "bundle"</div>
+            <div className="field">active: true</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="transformation-benefits">
+        <h4>✨ Beneficios de la Transformación:</h4>
+        <ul>
+          <li>🔄 <strong>$toString</strong>: Convierte ObjectId a String para mejor compatibilidad</li>
+          <li>🎯 <strong>Campos específicos</strong>: Solo incluye los datos necesarios</li>
+          <li>📋 <strong>Formato consistente</strong>: Estructura predecible para el cliente</li>
+        </ul>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const CatalogTypeResultSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      ✅ Resultado Final del Pipeline
+    </motion.h2>
+
+    <motion.div 
+      className="pipeline-summary"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <h3>📋 Pipeline Ejecutado:</h3>
+      <div className="pipeline-steps">
+        <div className="step completed">1️⃣ $match → Filtrar por ID y activo</div>
+        <div className="step completed">2️⃣ $project → Formatear salida</div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="result-scenarios"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>🎯 Posibles Resultados:</h3>
+      
+      <div className="scenario success">
+        <h4>✅ Caso Exitoso:</h4>
+        <div className="result-doc">
+          <div className="field">id: "507f1f77bcf86cd799439001"</div>
+          <div className="field">description: "bundle"</div>
+          <div className="field">active: true</div>
+        </div>
+        <p><strong>Significado:</strong> El tipo de catálogo existe y está activo ✨</p>
+      </div>
+
+      <div className="scenario error">
+        <h4>❌ Caso de Error:</h4>
+        <div className="result-doc empty">
+          <div className="field">[] ← Array vacío</div>
+        </div>
+        <p><strong>Significado:</strong> El tipo de catálogo no existe o está inactivo ⚠️</p>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="validation-logic"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7 }}
+    >
+      <h3>🔍 Lógica de Validación:</h3>
+      <div className="code-block">
+        <span className="comment"># En Python:</span><br/>
+        <span>catalog_type_result = list(catalog_types_coll.aggregate(pipeline))</span><br/>
+        <span className="keyword">if</span> catalog_type_result:<br/>
+        <span className="indent"># ✅ Tipo de catálogo válido</span><br/>
+        <span className="keyword">else</span>:<br/>
+        <span className="indent"># ❌ Tipo de catálogo inválido</span>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const CatalogTypeUsageSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🏗️ Uso en el Modelo Catalog
+    </motion.h2>
+
+    <motion.div 
+      className="usage-context"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <h3>📋 Contexto del Modelo:</h3>
+      <div className="model-info">
+        <div className="model-field">
+          <strong>Campo:</strong> id_catalog_type: str
+        </div>
+        <div className="model-field">
+          <strong>Descripción:</strong> "ID del tipo de catálogo al que pertenece"
+        </div>
+        <div className="model-field">
+          <strong>Ejemplo:</strong> "507f1f77bcf86cd799439011"
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="usage-flow"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>🔄 Flujo de Validación:</h3>
+      
+      <div className="flow-steps">
+        <div className="flow-step">
+          <div className="step-number">1</div>
+          <div className="step-content">
+            <h4>📥 Cliente envía Catalog</h4>
+            <p>Incluye id_catalog_type</p>
+          </div>
+        </div>
+
+        <div className="flow-arrow">↓</div>
+
+        <div className="flow-step">
+          <div className="step-number">2</div>
+          <div className="step-content">
+            <h4>🔍 Validar catalog_type</h4>
+            <p>Pipeline de aggregation</p>
+          </div>
+        </div>
+
+        <div className="flow-arrow">↓</div>
+
+        <div className="flow-step decision">
+          <div className="step-number">3</div>
+          <div className="step-content">
+            <h4>⚖️ Decisión</h4>
+            <div className="decision-paths">
+              <div className="path success">✅ Válido → Crear Catalog</div>
+              <div className="path error">❌ Inválido → Error 400</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="implementation-code"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7 }}
+    >
+      <h3>💻 Implementación Real:</h3>
+      <div className="code-block">
+        <span className="comment"># Validar que el catalog_type existe y está activo</span><br/>
+        <span>catalog_type_pipeline = validate_catalog_type_pipeline(catalog.id_catalog_type)</span><br/>
+        <span>catalog_type_result = list(catalog_types_coll.aggregate(catalog_type_pipeline))</span><br/>
+        <br/>
+        <span className="keyword">if not</span> catalog_type_result:<br/>
+        <span className="indent">raise HTTPException(status_code=400, detail="Invalid catalog type")</span>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="success-message"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.9 }}
+    >
+      <p>🎯 ¡Pipeline simple pero poderoso para validaciones críticas en el sistema!</p>
     </motion.div>
   </div>
 )
