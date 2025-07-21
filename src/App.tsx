@@ -1,0 +1,1349 @@
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
+import { LookupStep } from './components/LookupStep'
+import './App.css'
+
+// Types for our MongoDB data
+interface CatalogDocument {
+  _id: string
+  id_catalog_type: string
+  name: string
+  description: string
+  cost: number
+  discount: number
+  active: boolean
+}
+
+interface CatalogTypeDocument {
+  _id: string
+  description: string
+  active: boolean
+}
+
+// Sample data
+const sampleCatalogs: CatalogDocument[] = [
+  {
+    _id: "507f1f77bcf86cd799439011",
+    id_catalog_type: "507f1f77bcf86cd799439001",
+    name: "Bundle Chocolates Especiales",
+    description: "Caja con chocolates premium",
+    cost: 450.00,
+    discount: 15,
+    active: true
+  },
+  {
+    _id: "507f1f77bcf86cd799439012",
+    id_catalog_type: "507f1f77bcf86cd799439002",
+    name: "Chocolate Individual",
+    description: "Chocolate artesanal",
+    cost: 25.00,
+    discount: 0,
+    active: true
+  }
+]
+
+const sampleCatalogTypes: CatalogTypeDocument[] = [
+  {
+    _id: "507f1f77bcf86cd799439001",
+    description: "bundle",
+    active: true
+  },
+  {
+    _id: "507f1f77bcf86cd799439002",
+    description: "product",
+    active: true
+  }
+]
+
+// Sample bundle_details data
+const sampleBundleDetails = [
+  {
+    _id: "507f1f77bcf86cd799439021",
+    id_bundle: "507f1f77bcf86cd799439011",
+    id_producto: "507f1f77bcf86cd799439031",
+    quantity: 2
+  },
+  {
+    _id: "507f1f77bcf86cd799439022", 
+    id_bundle: "507f1f77bcf86cd799439011",
+    id_producto: "507f1f77bcf86cd799439032",
+    quantity: 1
+  }
+]
+
+// Sample products for bundle details
+const sampleProducts = [
+  {
+    _id: "507f1f77bcf86cd799439031",
+    name: "Chocolate Premium",
+    description: "Chocolate belga de alta calidad",
+    cost: 150.00,
+    active: true
+  },
+  {
+    _id: "507f1f77bcf86cd799439032",
+    name: "Dulce de Leche",
+    description: "Dulce artesanal casero",
+    cost: 75.00,
+    active: true
+  }
+]
+
+function App() {
+  const [currentExercise, setCurrentExercise] = useState<string | null>(null)
+  const [currentSlide, setCurrentSlide] = useState(0)
+  
+  const exercises = {
+    'bundle-validation': {
+      title: 'Validación de Bundle',
+      description: 'Pipeline para verificar que un documento es de tipo bundle',
+      totalSlides: 9
+    },
+    'bundle-details': {
+      title: 'Detalles de Bundle',
+      description: 'Pipeline para obtener información completa de productos en un bundle',
+      totalSlides: 8
+    }
+  }
+
+  const currentExerciseData = currentExercise ? exercises[currentExercise as keyof typeof exercises] : null
+  const totalSlides = currentExerciseData?.totalSlides || 9
+
+  const selectExercise = (exerciseKey: string) => {
+    setCurrentExercise(exerciseKey)
+    setCurrentSlide(0)
+  }
+
+  const backToMenu = () => {
+    setCurrentExercise(null)
+    setCurrentSlide(0)
+  }
+
+  const nextSlide = () => {
+    if (currentSlide < totalSlides - 1) {
+      setCurrentSlide(currentSlide + 1)
+    }
+  }
+
+  const previousSlide = () => {
+    if (currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1)
+    }
+  }
+
+  const resetPresentation = () => {
+    setCurrentSlide(0)
+  }
+
+  return (
+    <div className="presentation-container">
+      {!currentExercise ? (
+        <ExerciseMenu exercises={exercises} onSelectExercise={selectExercise} />
+      ) : (
+        <>
+          {/* Header */}
+          <div className="header">
+            <div className="header-left">
+              <button className="btn back-btn" onClick={backToMenu}>
+                <ChevronLeft size={20} />
+                ← Volver al Menú
+              </button>
+              <h1 className="title">🍭 {currentExerciseData?.title}</h1>
+            </div>
+            <div className="slide-info">
+              <span>{currentSlide + 1} / {totalSlides}</span>
+            </div>
+            <div className="controls">
+              <button 
+                className="btn" 
+                onClick={previousSlide} 
+                disabled={currentSlide === 0}
+              >
+                <ChevronLeft size={20} />
+                Anterior
+          </button>
+          <button 
+            className="btn" 
+            onClick={nextSlide} 
+            disabled={currentSlide === totalSlides - 1}
+          >
+            Siguiente
+            <ChevronRight size={20} />
+          </button>
+          <button className="btn reset-btn" onClick={resetPresentation}>
+            <RotateCcw size={20} />
+            Reiniciar
+          </button>
+        </div>
+      </div>
+
+      {/* Slides Container */}
+      <div className="slides-container">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            className="slide"
+            initial={{ opacity: 0, x: 300 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -300 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
+            {currentExercise === 'bundle-validation' && (
+              <>
+                {currentSlide === 0 && <IntroSlide />}
+                {currentSlide === 1 && <TraditionalVsAggregationSlide />}
+                {currentSlide === 2 && <InitialDataSlide catalogs={sampleCatalogs} catalogTypes={sampleCatalogTypes} />}
+                {currentSlide === 3 && <TargetResultSlide />}
+                {currentSlide === 4 && <ConnectionDemoSlide />}
+                {currentSlide === 5 && <MatchStepSlide />}
+                {currentSlide === 6 && <AddFieldsStepSlide />}
+                {currentSlide === 7 && <LookupStep catalogs={sampleCatalogs} catalogTypes={sampleCatalogTypes} />}
+                {currentSlide === 8 && <FinalMatchStepSlide />}
+              </>
+            )}
+            
+            {currentExercise === 'bundle-details' && (
+              <>
+                {currentSlide === 0 && <BundleDetailsIntroSlide />}
+                {currentSlide === 1 && <BundleDetailsDataSlide />}
+                {currentSlide === 2 && <BundleDetailsMatchStepSlide />}
+                {currentSlide === 3 && <BundleDetailsAddFieldsStepSlide />}
+                {currentSlide === 4 && <BundleDetailsLookupStepSlide />}
+                {currentSlide === 5 && <BundleDetailsUnwindStepSlide />}
+                {currentSlide === 6 && <BundleDetailsProjectStepSlide />}
+                {currentSlide === 7 && <BundleDetailsFinalResultSlide />}
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Footer */}
+      <div className="footer">
+        <div className="progress-container">
+          <span>Progreso:</span>
+          <div className="progress-bar">
+            <motion.div 
+              className="progress-fill" 
+              initial={{ width: "0%" }}
+              animate={{ width: `${((currentSlide + 1) / totalSlides) * 100}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+          <span>{currentSlide + 1}/{totalSlides}</span>
+        </div>
+      </div>
+      </>
+      )}
+    </div>
+  )
+}
+
+// Exercise Menu Component
+const ExerciseMenu = ({ exercises, onSelectExercise }: {
+  exercises: Record<string, { title: string; description: string; totalSlides: number }>
+  onSelectExercise: (key: string) => void
+}) => (
+  <div className="exercise-menu">
+    <motion.div 
+      className="menu-container"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <motion.h1 
+        className="menu-title"
+        initial={{ y: -30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        🍭 MongoDB Aggregation Pipeline - Dulcería
+      </motion.h1>
+      
+      <motion.p 
+        className="menu-subtitle"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        Selecciona un ejercicio para comenzar la presentación interactiva
+      </motion.p>
+
+      <div className="exercise-grid">
+        {Object.entries(exercises).map(([key, exercise], index) => (
+          <motion.button
+            key={key}
+            className="exercise-card"
+            onClick={() => onSelectExercise(key)}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 + index * 0.2 }}
+            whileHover={{ scale: 1.05, y: -5 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <div className="exercise-icon">
+              {key === 'bundle-validation' ? '🔍' : '📦'}
+            </div>
+            <h3 className="exercise-title">{exercise.title}</h3>
+            <p className="exercise-description">{exercise.description}</p>
+            <div className="exercise-meta">
+              <span className="slides-count">{exercise.totalSlides} slides</span>
+              <span className="start-arrow">→</span>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+
+      <motion.div 
+        className="menu-footer"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.0 }}
+      >
+        <p>💡 Aprende MongoDB Aggregation Pipeline de forma visual e interactiva</p>
+      </motion.div>
+    </motion.div>
+  </div>
+)
+
+// Slide Components
+const IntroSlide = () => (
+  <div className="slide-content intro-slide">
+    <motion.h2 
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.2 }}
+    >
+      Objetivo del Pipeline
+    </motion.h2>
+    <motion.p 
+      initial={{ y: 50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.4 }}
+    >
+      Queremos encontrar un bundle específico en nuestra dulcería y confirmar que realmente es de tipo "bundle" (no un producto individual).
+    </motion.p>
+    
+    <motion.div 
+      className="explanation"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0.6 }}
+    >
+      <h3>¿Por qué necesitamos un pipeline?</h3>
+      <p>Porque la información está distribuida en dos colecciones diferentes:</p>
+      <ul>
+        <li><strong>catalogs</strong> - Contiene los productos/bundles</li>
+        <li><strong>catalogtypes</strong> - Define si es "bundle" o "product"</li>
+      </ul>
+    </motion.div>
+  </div>
+)
+
+const TraditionalVsAggregationSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.2 }}
+    >
+      🔍 Método Tradicional vs Aggregation Pipeline
+    </motion.h2>
+
+    <div className="comparison-layout">
+      {/* Traditional Method */}
+      <motion.div 
+        className="traditional-method"
+        initial={{ x: -50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <h3>❌ Método Tradicional</h3>
+        <div className="code-block-traditional">
+          <div className="code-step">
+            <h4>1️⃣ Buscar bundle por ID</h4>
+            <pre>{`bundle_doc = catalogs_coll.find_one({
+  "_id": ObjectId(bundle_id)
+})
+
+if not bundle_doc:
+  raise HTTPException(404, "Bundle no encontrado")`}</pre>
+          </div>
+          
+          <div className="code-step">
+            <h4>2️⃣ Obtener ID del tipo</h4>
+            <pre>{`catalog_type_id = bundle_doc.get("id_catalog_type")
+
+if not catalog_type_id:
+  raise HTTPException(409, "Sin tipo asociado")`}</pre>
+          </div>
+          
+          <div className="code-step">
+            <h4>3️⃣ Segunda consulta a BD</h4>
+            <pre>{`catalog_type_doc = catalogtypes_coll.find_one({
+  "_id": ObjectId(catalog_type_id)
+})
+
+if not catalog_type_doc:
+  raise HTTPException(404, "Tipo no existe")`}</pre>
+          </div>
+
+          <div className="code-step">
+            <h4>4️⃣ Validar tipo</h4>
+            <pre>{`description = catalog_type_doc.get("description", "")
+if description.lower() != "bundle":
+  raise HTTPException(400, "No es tipo bundle")`}</pre>
+          </div>
+        </div>
+
+        <motion.div 
+          className="problems-list"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.0 }}
+        >
+          <h4>⚠️ Problemas:</h4>
+          <ul>
+            <li>🐌 <strong>Múltiples consultas</strong> a la base de datos</li>
+            <li>📝 <strong>Código largo</strong> y difícil de mantener</li>
+            <li>🔧 <strong>Manejo manual</strong> de errores en cada paso</li>
+            <li>⚡ <strong>Ineficiente</strong> para grandes volúmenes</li>
+          </ul>
+        </motion.div>
+      </motion.div>
+
+      {/* VS Divider */}
+      <motion.div 
+        className="vs-divider"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.8, type: "spring" }}
+      >
+        <div className="vs-circle">VS</div>
+      </motion.div>
+
+      {/* Aggregation Method */}
+      <motion.div 
+        className="aggregation-method"
+        initial={{ x: 50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.6 }}
+      >
+        <h3>✅ Aggregation Pipeline</h3>
+        <div className="code-block-aggregation">
+          <pre>{`db.catalogs.aggregate([
+  {
+    $match: { 
+      "_id": ObjectId(bundle_id) 
+    }
+  },
+  {
+    $addFields: {
+      "id_catalog_type_obj": {
+        $toObjectId: "$id_catalog_type"
+      }
+    }
+  },
+  {
+    $lookup: {
+      from: "catalogtypes",
+      localField: "id_catalog_type_obj",
+      foreignField: "_id",
+      as: "catalog_type"
+    }
+  },
+  {
+    $match: {
+      "catalog_type.description": {
+        $regex: "^bundle$", $options: "i"
+      }
+    }
+  }
+])`}</pre>
+        </div>
+
+        <motion.div 
+          className="benefits-list"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+        >
+          <h4>🎉 Beneficios:</h4>
+          <ul>
+            <li>⚡ <strong>Una sola consulta</strong> a la base de datos</li>
+            <li>🎯 <strong>Código conciso</strong> y fácil de leer</li>
+            <li>🔄 <strong>Pipeline optimizado</strong> por MongoDB</li>
+            <li>🚀 <strong>Mejor rendimiento</strong> y escalabilidad</li>
+          </ul>
+        </motion.div>
+      </motion.div>
+    </div>
+  </div>
+)
+
+const InitialDataSlide = ({ catalogs, catalogTypes }: { catalogs: CatalogDocument[], catalogTypes: CatalogTypeDocument[] }) => (
+  <div className="slide-content">
+    <h2>Estado Inicial - Nuestras Colecciones</h2>
+    <div className="collections-container">
+      <motion.div 
+        className="collection"
+        initial={{ x: -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <h3>📦 Colección: catalogs</h3>
+        {catalogs.map((doc, index) => (
+          <motion.div 
+            key={doc._id}
+            className="document"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 + index * 0.2 }}
+          >
+            <pre>{JSON.stringify(doc, null, 2)}</pre>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      <motion.div 
+        className="collection"
+        initial={{ x: 100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <h3>🏷️ Colección: catalogtypes</h3>
+        {catalogTypes.map((doc, index) => (
+          <motion.div 
+            key={doc._id}
+            className="document"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 + index * 0.2 }}
+          >
+            <pre>{JSON.stringify(doc, null, 2)}</pre>
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
+  </div>
+)
+
+// Placeholder components for other slides
+const TargetResultSlide = () => (
+  <div className="slide-content">
+    <h2>🎯 Resultado Esperado</h2>
+    <div className="explanation">
+      Este es el resultado que esperamos obtener al final de nuestro pipeline
+    </div>
+
+    <motion.div 
+      className="result-container"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0.3, type: "spring" }}
+    >
+      <h3>🎉 ¡Resultado Final!</h3>
+      <div className="document joined" style={{ textAlign: 'left', maxWidth: '600px', margin: '20px auto' }}>
+        <pre>{JSON.stringify({
+          "_id": "507f1f77bcf86cd799439011",
+          "name": "Bundle Chocolates Especiales", 
+          "description": "Caja con chocolates premium",
+          "cost": 450.00,
+          "discount": 15,
+          "active": true,
+          "catalog_type": [{
+            "_id": "507f1f77bcf86cd799439001",
+            "description": "bundle",
+            "active": true
+          }]
+        }, null, 2)}</pre>
+      </div>
+      <motion.p 
+        style={{ marginTop: '20px', fontSize: '1.2em' }}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.6 }}
+      >
+        ✅ <strong>Confirmado:</strong> Es un bundle válido con toda la información completa
+      </motion.p>
+    </motion.div>
+
+    <div className="explanation">
+      <strong>Nota clave:</strong> El documento final incluye la información completa del bundle 
+      MÁS la confirmación de que es realmente de tipo "bundle" (no product).
+    </div>
+  </div>
+)
+
+const ConnectionDemoSlide = () => (
+  <div className="slide-content">
+    <h2>🔗 Demostración Visual - Conexión de Datos</h2>
+    
+    <div className="explanation">
+      <strong>¿Cómo se conectan nuestros datos?</strong><br/>
+      Veamos visualmente cómo se relacionan las colecciones para obtener la información completa.
+    </div>
+
+    <motion.div 
+      className="connection-demo"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <div className="collections-container">
+        <motion.div 
+          className="collection"
+          initial={{ x: -100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <h3>📦 catalogs</h3>
+          <div className="document">
+            <div className="highlight-field">id_catalog_type: "507f1f77bcf86cd799439001"</div>
+            <div>name: "Bundle Chocolates Especiales"</div>
+            <div>cost: 450.00</div>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          className="connection-arrow-demo"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 1, type: "spring" }}
+        >
+          <div className="arrow">➡️</div>
+          <div className="connection-text">Se conecta por ID</div>
+        </motion.div>
+
+        <motion.div 
+          className="collection"
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          <h3>🏷️ catalogtypes</h3>
+          <div className="document">
+            <div className="highlight-field">_id: "507f1f77bcf86cd799439001"</div>
+            <div>description: "bundle"</div>
+            <div>active: true</div>
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="explanation"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 1.5 }}
+    >
+      💡 <strong>El pipeline nos ayuda a "pegar" esta información</strong> para obtener un documento 
+      completo que confirme que nuestro bundle es realmente de tipo "bundle".
+    </motion.div>
+  </div>
+)
+
+const MatchStepSlide = () => (
+  <div className="slide-content">
+    <h2>🔍 Paso 1: $match - Buscar Bundle Específico</h2>
+
+    <motion.div 
+      className="code-block"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.2 }}
+    >
+      <pre>{JSON.stringify({"$match": {"_id": "ObjectId('507f1f77bcf86cd799439011')"}}, null, 2)}</pre>
+    </motion.div>
+
+    <div className="explanation">
+      Filtramos la colección catalogs para encontrar solo el bundle con ID específico
+    </div>
+
+    <div className="comparison-container">
+      <motion.div 
+        className="current-state"
+        initial={{ x: -50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <div className="state-title">📊 Estamos aquí (Input)</div>
+        <div className="document">
+          Múltiples documentos en catalogs:<br/>
+          • Bundle Chocolates Especiales<br/>
+          • Chocolate Individual<br/>
+          • Bundle Dulces Tradicionales
+        </div>
+      </motion.div>
+
+      <motion.div 
+        className="vs-divider"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.6, type: "spring" }}
+      >
+        ⬇️
+      </motion.div>
+
+      <motion.div 
+        className="next-state"
+        initial={{ x: 50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.8 }}
+      >
+        <div className="state-title">🎯 Resultado (Output)</div>
+        <div className="document filtered">
+          <pre>{JSON.stringify({
+            "_id": "507f1f77bcf86cd799439011",
+            "id_catalog_type": "507f1f77bcf86cd799439001",
+            "name": "Bundle Chocolates Especiales",
+            "description": "Caja con chocolates premium",
+            "cost": 450.00,
+            "discount": 15,
+            "active": true
+          }, null, 2)}</pre>
+        </div>
+      </motion.div>
+    </div>
+  </div>
+)
+
+const AddFieldsStepSlide = () => (
+  <div className="slide-content">
+    <h2>🔧 Paso 2: $addFields - Convertir ID a ObjectId</h2>
+
+    <motion.div 
+      className="code-block"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.2 }}
+    >
+      <pre>{JSON.stringify({
+        "$addFields": {
+          "id_catalog_type_obj": {"$toObjectId": "$id_catalog_type"}
+        }
+      }, null, 2)}</pre>
+    </motion.div>
+
+    <div className="explanation">
+      Convertimos el campo id_catalog_type (string) a ObjectId para poder hacer el JOIN
+    </div>
+
+    <div className="comparison-container">
+      <motion.div 
+        className="current-state"
+        initial={{ x: -50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <div className="state-title">📊 Estamos aquí (Input)</div>
+        <div className="document">
+          <pre>{JSON.stringify({
+            "_id": "507f1f77bcf86cd799439011",
+            "id_catalog_type": "507f1f77bcf86cd799439001",
+            "name": "Bundle Chocolates Especiales"
+          }, null, 2)}</pre>
+        </div>
+      </motion.div>
+
+      <motion.div 
+        className="vs-divider"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.6, type: "spring" }}
+      >
+        ⬇️
+      </motion.div>
+
+      <motion.div 
+        className="next-state"
+        initial={{ x: 50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.8 }}
+      >
+        <div className="state-title">🎯 Resultado (Output)</div>
+        <div className="document joined">
+          <pre>{JSON.stringify({
+            "_id": "507f1f77bcf86cd799439011",
+            "id_catalog_type": "507f1f77bcf86cd799439001",
+            "id_catalog_type_obj": "ObjectId('507f1f77bcf86cd799439001')",
+            "name": "Bundle Chocolates Especiales"
+          }, null, 2)}</pre>
+          <div className="highlight-field" style={{marginTop: '10px'}}>
+            ⬆️ Nuevo campo agregado
+          </div>
+        </div>
+      </motion.div>
+    </div>
+
+    <motion.div 
+      className="explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1 }}
+    >
+      <strong>¿Por qué este paso?</strong> MongoDB necesita que los campos sean del mismo tipo para hacer JOIN. 
+      El _id en catalogtypes es ObjectId, pero id_catalog_type es string.
+    </motion.div>
+  </div>
+)
+
+const FinalMatchStepSlide = () => (
+  <div className="slide-content">
+    <h2>✅ Paso 4: $match Final - Verificar que es Bundle</h2>
+
+    <motion.div 
+      className="code-block"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.2 }}
+    >
+      <pre>{JSON.stringify({
+        "$match": {
+          "catalog_type.description": {"$regex": "^bundle$", "$options": "i"}
+        }
+      }, null, 2)}</pre>
+    </motion.div>
+
+    <div className="explanation">
+      Verificamos que el tipo sea exactamente "bundle" (ignora mayúsculas/minúsculas)
+    </div>
+
+    <div className="comparison-container">
+      <motion.div 
+        className="current-state"
+        initial={{ x: -50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <div className="state-title">📊 Estamos aquí (Input)</div>
+        <div className="document">
+          Documento con catalog_type array que puede contener:<br/>
+          • "bundle" ✅<br/>
+          • "product" ❌<br/>
+          • otros tipos ❌
+        </div>
+      </motion.div>
+
+      <motion.div 
+        className="vs-divider"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.6, type: "spring" }}
+      >
+        ✅
+      </motion.div>
+
+      <motion.div 
+        className="next-state"
+        initial={{ x: 50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.8 }}
+      >
+        <div className="state-title">🎯 Resultado Final</div>
+        <div className="result-container">
+          <motion.h3
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 1, type: "spring" }}
+          >
+            🎉 ¡Pipeline Completado!
+          </motion.h3>
+          <div className="document joined" style={{textAlign: 'left', maxWidth: '500px', margin: '20px auto'}}>
+            <pre>{JSON.stringify({
+              "_id": "507f1f77bcf86cd799439011",
+              "name": "Bundle Chocolates Especiales",
+              "cost": 450.00,
+              "catalog_type": [{"description": "bundle"}]
+            }, null, 2)}</pre>
+          </div>
+          <motion.p 
+            style={{marginTop: '15px', fontSize: '1.1em'}}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.2 }}
+          >
+            ✅ <strong>Confirmado:</strong> Es un bundle válido
+          </motion.p>
+        </div>
+      </motion.div>
+    </div>
+
+    <motion.div 
+      className="explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1.4 }}
+    >
+      <strong>Misión cumplida:</strong> Hemos encontrado y verificado que el producto específico es realmente un bundle, 
+      no un producto individual. ¡Pipeline exitoso! 🎊
+    </motion.div>
+  </div>
+)
+
+// Bundle Details Exercise Components
+const BundleDetailsIntroSlide = () => (
+  <div className="slide-content intro-slide">
+    <motion.h2 
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.2 }}
+    >
+      📦 Objetivo: Obtener Detalles del Bundle
+    </motion.h2>
+    
+    <motion.p 
+      className="intro-text"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.4 }}
+    >
+      Queremos obtener información completa de todos los productos que forman parte de un bundle específico, 
+      incluyendo nombres, descripciones, costos y cantidades.
+    </motion.p>
+    
+    <motion.div 
+      className="explanation"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0.6 }}
+    >
+      <h3>Pipeline a construir:</h3>
+      <ul>
+        <li><strong>$match</strong> - Filtrar por bundle específico</li>
+        <li><strong>$addFields</strong> - Convertir id_producto a ObjectId</li>
+        <li><strong>$lookup</strong> - JOIN con colección catalogs</li>
+        <li><strong>$unwind</strong> - Descomponer array de productos</li>
+        <li><strong>$project</strong> - Formato final de salida</li>
+      </ul>
+    </motion.div>
+  </div>
+)
+
+const BundleDetailsDataSlide = () => (
+  <div className="slide-content">
+    <h2>Datos Iniciales - bundle_details y catalogs</h2>
+    
+    <div className="collections-container">
+      <motion.div 
+        className="collection-card"
+        initial={{ x: -50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <h3>📋 bundle_details (Detalles)</h3>
+        <div className="documents-grid">
+          {sampleBundleDetails.map((detail, index) => (
+            <div key={index} className="document">
+              <div className="field"><strong>_id:</strong> {detail._id}</div>
+              <div className="field"><strong>id_bundle:</strong> {detail.id_bundle}</div>
+              <div className="field"><strong>id_producto:</strong> {detail.id_producto}</div>
+              <div className="field"><strong>quantity:</strong> {detail.quantity}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      <motion.div 
+        className="collection-card"
+        initial={{ x: 50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <h3>🛍️ catalogs (Productos)</h3>
+        <div className="documents-grid">
+          {sampleProducts.map((product, index) => (
+            <div key={index} className="document">
+              <div className="field"><strong>_id:</strong> {product._id}</div>
+              <div className="field"><strong>name:</strong> {product.name}</div>
+              <div className="field"><strong>description:</strong> {product.description}</div>
+              <div className="field"><strong>cost:</strong> ${product.cost}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  </div>
+)
+
+const BundleDetailsMatchStepSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🎯 Paso 1: $match - Filtrar por Bundle
+    </motion.h2>
+
+    <motion.div 
+      className="step-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <p>Filtramos todos los detalles que pertenecen al bundle específico</p>
+    </motion.div>
+
+    <motion.div 
+      className="code-section"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>💻 Código:</h3>
+      <div className="code-block">
+        <pre>{`{
+  "$match": {
+    "id_bundle": "507f1f77bcf86cd799439011"
+  }
+}`}</pre>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="result-preview"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7 }}
+    >
+      <h3>📤 Resultado:</h3>
+      <div className="result-documents">
+        {sampleBundleDetails.map((detail, index) => (
+          <div key={index} className="result-doc">
+            <div className="field">_id: {detail._id}</div>
+            <div className="field highlight">id_bundle: {detail.id_bundle}</div>
+            <div className="field">id_producto: {detail.id_producto}</div>
+            <div className="field">quantity: {detail.quantity}</div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  </div>
+)
+
+const BundleDetailsAddFieldsStepSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🔧 Paso 2: $addFields - Convertir a ObjectId
+    </motion.h2>
+
+    <motion.div 
+      className="step-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <p>Convertimos el campo id_producto (string) a ObjectId para poder hacer el JOIN</p>
+    </motion.div>
+
+    <motion.div 
+      className="code-section"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>💻 Código:</h3>
+      <div className="code-block">
+        <pre>{`{
+  "$addFields": {
+    "id_producto_obj": {
+      "$toObjectId": "$id_producto"
+    }
+  }
+}`}</pre>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="transformation-demo"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.7 }}
+    >
+      <h3>🔄 Transformación:</h3>
+      <div className="transformation-container">
+        <div className="before">
+          <h4>📋 Antes:</h4>
+          <div className="field">id_producto: "507f1f77bcf86cd799439031"</div>
+        </div>
+        <div className="arrow">→</div>
+        <div className="after">
+          <h4>✅ Después:</h4>
+          <div className="field">id_producto: "507f1f77bcf86cd799439031"</div>
+          <div className="field new-field">id_producto_obj: ObjectId("507f1f77bcf86cd799439031")</div>
+        </div>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const BundleDetailsLookupStepSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🔗 Paso 3: $lookup - JOIN con catalogs
+    </motion.h2>
+
+    <motion.div 
+      className="step-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <p>Hacemos JOIN con la colección catalogs para obtener información del producto</p>
+    </motion.div>
+
+    <motion.div 
+      className="code-section"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>💻 Código:</h3>
+      <div className="code-block">
+        <pre>{`{
+  "$lookup": {
+    "from": "catalogs",
+    "localField": "id_producto_obj",
+    "foreignField": "_id",
+    "as": "product_info"
+  }
+}`}</pre>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="lookup-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7 }}
+    >
+      <div className="lookup-params">
+        <div className="param">
+          <strong>from:</strong> "catalogs" - Colección de productos
+        </div>
+        <div className="param">
+          <strong>localField:</strong> "id_producto_obj" - Nuestro campo ObjectId
+        </div>
+        <div className="param">
+          <strong>foreignField:</strong> "_id" - Campo _id de catalogs
+        </div>
+        <div className="param">
+          <strong>as:</strong> "product_info" - Nueva columna con datos del producto
+        </div>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const BundleDetailsUnwindStepSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      📤 Paso 4: $unwind - Descomponer Array
+    </motion.h2>
+
+    <motion.div 
+      className="step-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <p>$lookup devuelve un array. Usamos $unwind para convertir cada elemento del array en un documento separado</p>
+    </motion.div>
+
+    <motion.div 
+      className="code-section"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>💻 Código:</h3>
+      <div className="code-block">
+        <pre>{`{
+  "$unwind": "$product_info"
+}`}</pre>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="unwind-demo"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.7 }}
+    >
+      <h3>🔄 Efecto del $unwind:</h3>
+      <div className="unwind-container">
+        <div className="before-unwind">
+          <h4>📋 Antes (con array):</h4>
+          <div className="document">
+            <div className="field">_id: "507f1f77bcf86cd799439021"</div>
+            <div className="field">quantity: 2</div>
+            <div className="field array-field">
+              product_info: [
+              <div className="array-item">
+                {"{"} _id: "507f1f77bcf86cd799439031", name: "Chocolate Premium" {"}"}
+              </div>
+              ]
+            </div>
+          </div>
+        </div>
+        
+        <div className="arrow">→</div>
+        
+        <div className="after-unwind">
+          <h4>✅ Después (sin array):</h4>
+          <div className="document">
+            <div className="field">_id: "507f1f77bcf86cd799439021"</div>
+            <div className="field">quantity: 2</div>
+            <div className="field object-field">
+              product_info: {"{"} _id: "507f1f77bcf86cd799439031", name: "Chocolate Premium" {"}"}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const BundleDetailsProjectStepSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🎨 Paso 5: $project - Formato de Salida
+    </motion.h2>
+
+    <motion.div 
+      className="step-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <p>Definimos exactamente qué campos queremos en el resultado final y cómo deben llamarse</p>
+    </motion.div>
+
+    <motion.div 
+      className="code-section"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>💻 Código:</h3>
+      <div className="code-block">
+        <pre>{`{
+  "$project": {
+    "_id": 0,
+    "bundle_detail_id": {"$toString": "$_id"},
+    "id_producto": {"$toString": "$id_producto"},
+    "quantity": "$quantity",
+    "product_name": "$product_info.name",
+    "product_description": "$product_info.description",
+    "product_cost": "$product_info.cost",
+    "product_active": "$product_info.active"
+  }
+}`}</pre>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="project-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7 }}
+    >
+      <h3>🔍 Explicación de campos:</h3>
+      <div className="project-fields">
+        <div className="field-explanation">
+          <strong>"_id": 0</strong> - Excluir el _id original
+        </div>
+        <div className="field-explanation">
+          <strong>"bundle_detail_id"</strong> - Convertir _id a string
+        </div>
+        <div className="field-explanation">
+          <strong>"product_name"</strong> - Extraer nombre del producto del JOIN
+        </div>
+        <div className="field-explanation">
+          <strong>"product_cost"</strong> - Extraer costo del producto del JOIN
+        </div>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const BundleDetailsFinalResultSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🎉 Resultado Final - Detalles Completos del Bundle
+    </motion.h2>
+
+    <motion.div 
+      className="pipeline-summary"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <h3>📋 Pipeline Completo Ejecutado:</h3>
+      <div className="pipeline-steps">
+        <div className="step">1️⃣ $match → Filtrar por bundle</div>
+        <div className="step">2️⃣ $addFields → Convertir a ObjectId</div>
+        <div className="step">3️⃣ $lookup → JOIN con productos</div>
+        <div className="step">4️⃣ $unwind → Descomponer array</div>
+        <div className="step">5️⃣ $project → Formato final</div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="final-result"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>✨ Resultado:</h3>
+      <div className="result-documents">
+        <div className="result-doc success">
+          <div className="field">bundle_detail_id: "507f1f77bcf86cd799439021"</div>
+          <div className="field">id_producto: "507f1f77bcf86cd799439031"</div>
+          <div className="field">quantity: 2</div>
+          <div className="field highlight">product_name: "Chocolate Premium"</div>
+          <div className="field highlight">product_description: "Chocolate belga de alta calidad"</div>
+          <div className="field highlight">product_cost: 150.00</div>
+          <div className="field">product_active: true</div>
+        </div>
+        
+        <div className="result-doc success">
+          <div className="field">bundle_detail_id: "507f1f77bcf86cd799439022"</div>
+          <div className="field">id_producto: "507f1f77bcf86cd799439032"</div>
+          <div className="field">quantity: 1</div>
+          <div className="field highlight">product_name: "Dulce de Leche"</div>
+          <div className="field highlight">product_description: "Dulce artesanal casero"</div>
+          <div className="field highlight">product_cost: 75.00</div>
+          <div className="field">product_active: true</div>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="success-message"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7 }}
+    >
+      <p>🎯 ¡Perfecto! Ahora tenemos toda la información de los productos del bundle en un formato claro y estructurado.</p>
+    </motion.div>
+  </div>
+)
+
+export default App
