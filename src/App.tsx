@@ -90,31 +90,6 @@ const sampleProducts = [
   }
 ]
 
-// Sample order details data
-const sampleOrderDetails = [
-  {
-    _id: "507f1f77bcf86cd799439051",
-    id_order: "ORD-001",
-    id_producto: "507f1f77bcf86cd799439031",
-    quantity: 3,
-    active: true
-  },
-  {
-    _id: "507f1f77bcf86cd799439052",
-    id_order: "ORD-001", 
-    id_producto: "507f1f77bcf86cd799439032",
-    quantity: 2,
-    active: true
-  },
-  {
-    _id: "507f1f77bcf86cd799439053",
-    id_order: "ORD-002",
-    id_producto: "507f1f77bcf86cd799439031", 
-    quantity: 1,
-    active: false
-  }
-]
-
 function App() {
   const [currentExercise, setCurrentExercise] = useState<string | null>(null)
   const [currentSlide, setCurrentSlide] = useState(0)
