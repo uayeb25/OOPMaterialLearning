@@ -90,6 +90,31 @@ const sampleProducts = [
   }
 ]
 
+// Sample order details data
+const sampleOrderDetails = [
+  {
+    _id: "507f1f77bcf86cd799439051",
+    id_order: "ORD-001",
+    id_producto: "507f1f77bcf86cd799439031",
+    quantity: 3,
+    active: true
+  },
+  {
+    _id: "507f1f77bcf86cd799439052",
+    id_order: "ORD-001", 
+    id_producto: "507f1f77bcf86cd799439032",
+    quantity: 2,
+    active: true
+  },
+  {
+    _id: "507f1f77bcf86cd799439053",
+    id_order: "ORD-002",
+    id_producto: "507f1f77bcf86cd799439031", 
+    quantity: 1,
+    active: false
+  }
+]
+
 function App() {
   const [currentExercise, setCurrentExercise] = useState<string | null>(null)
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -109,6 +134,11 @@ function App() {
       title: 'Validación de Tipo de Catálogo',
       description: 'Pipeline para validar tipos de catálogo con $match y $project',
       totalSlides: 6
+    },
+    'order-details': {
+      title: 'Detalles de Orden',
+      description: 'Pipeline avanzado para calcular subtotales y obtener información de productos en órdenes',
+      totalSlides: 7
     }
   }
 
@@ -229,6 +259,18 @@ function App() {
                 {currentSlide === 3 && <CatalogTypeProjectStepSlide />}
                 {currentSlide === 4 && <CatalogTypeResultSlide />}
                 {currentSlide === 5 && <CatalogTypeUsageSlide />}
+              </>
+            )}
+
+            {currentExercise === 'order-details' && (
+              <>
+                {currentSlide === 0 && <OrderDetailsIntroSlide />}
+                {currentSlide === 1 && <OrderDetailsDataSlide />}
+                {currentSlide === 2 && <OrderDetailsMatchStepSlide />}
+                {currentSlide === 3 && <OrderDetailsLookupStepSlide />}
+                {currentSlide === 4 && <OrderDetailsAddFieldsStepSlide />}
+                {currentSlide === 5 && <OrderDetailsCalculationSlide />}
+                {currentSlide === 6 && <OrderDetailsFinalResultSlide />}
               </>
             )}
           </motion.div>
@@ -1918,6 +1960,554 @@ const CatalogTypeUsageSlide = () => (
       transition={{ delay: 0.9 }}
     >
       <p>🎯 ¡Pipeline simple pero poderoso para validaciones críticas en el sistema!</p>
+    </motion.div>
+  </div>
+)
+
+// ======================================
+// ORDER DETAILS SLIDES
+// ======================================
+
+const OrderDetailsIntroSlide = () => (
+  <div className="slide-content">
+    <motion.h1 
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.8 }}
+    >
+      🛒 Detalles de Orden con Cálculos
+    </motion.h1>
+    
+    <motion.div 
+      className="intro-content"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.8 }}
+    >
+      <h2>🎯 Objetivo del Pipeline</h2>
+      <p>Obtener detalles completos de una orden incluyendo información de productos y cálculo automático de subtotales por línea.</p>
+      
+      <div className="pipeline-preview">
+        <h3>📝 Pipeline Avanzado:</h3>
+        <div className="code-block">
+          <span className="comment"># Pipeline para detalles de orden con cálculos</span><br/>
+          <span className="bracket">[</span><br/>
+          <span className="indent">{`{"$match": {"id_order": "ORD-001", "active": true}}`}</span><br/>
+          <span className="indent">{`{"$lookup": {...}} # JOIN con productos`}</span><br/>
+          <span className="indent">{`{"$addFields": {...}} # Cálculos de subtotales`}</span><br/>
+          <span className="bracket">]</span>
+        </div>
+      </div>
+
+      <div className="use-case">
+        <h3>💼 Caso de Uso Real:</h3>
+        <p>Sistema de e-commerce que necesita mostrar el detalle completo de una orden con precios actualizados y subtotales calculados automáticamente.</p>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const OrderDetailsDataSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      📊 Datos de Entrada - Colecciones Relacionadas
+    </motion.h2>
+
+    <motion.div 
+      className="collections-container"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <div className="collection">
+        <h3>📁 order_details Collection</h3>
+        <div className="documents">
+          <div className="document">
+            <div className="doc-header">Línea 1 - ORD-001</div>
+            <div className="field">_id: ObjectId("...439051")</div>
+            <div className="field highlight">id_order: "ORD-001"</div>
+            <div className="field">id_producto: "507f1f77bcf86cd799439031"</div>
+            <div className="field">quantity: 3</div>
+            <div className="field success">active: true</div>
+          </div>
+          
+          <div className="document">
+            <div className="doc-header">Línea 2 - ORD-001</div>
+            <div className="field">_id: ObjectId("...439052")</div>
+            <div className="field highlight">id_order: "ORD-001"</div>
+            <div className="field">id_producto: "507f1f77bcf86cd799439032"</div>
+            <div className="field">quantity: 2</div>
+            <div className="field success">active: true</div>
+          </div>
+
+          <div className="document">
+            <div className="doc-header">Línea 3 - ORD-002</div>
+            <div className="field">_id: ObjectId("...439053")</div>
+            <div className="field">id_order: "ORD-002"</div>
+            <div className="field">id_producto: "507f1f77bcf86cd799439031"</div>
+            <div className="field">quantity: 1</div>
+            <div className="field error">active: false</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="collection">
+        <h3>📁 catalogs Collection</h3>
+        <div className="documents">
+          <div className="document">
+            <div className="doc-header">Producto 1</div>
+            <div className="field">_id: ObjectId("507f1f77bcf86cd799439031")</div>
+            <div className="field">name: "Chocolate Premium"</div>
+            <div className="field price">cost: 150.00</div>
+            <div className="field success">active: true</div>
+          </div>
+          
+          <div className="document">
+            <div className="doc-header">Producto 2</div>
+            <div className="field">_id: ObjectId("507f1f77bcf86cd799439032")</div>
+            <div className="field">name: "Dulce de Leche"</div>
+            <div className="field price">cost: 75.00</div>
+            <div className="field success">active: true</div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="target-info"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>🎯 Objetivo:</h3>
+      <p>Obtener las líneas de la orden "ORD-001" con información completa de productos y subtotales calculados.</p>
+    </motion.div>
+  </div>
+)
+
+const OrderDetailsMatchStepSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🎯 Paso 1: $match - Filtrar por Orden
+    </motion.h2>
+
+    <motion.div 
+      className="step-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <h3>🔍 Criterios de Filtrado:</h3>
+      <div className="operation-demo">
+        <div className="code-block">
+          <span className="bracket">{`{`}</span><br/>
+          <span className="indent">{`"$match": {`}</span><br/>
+          <span className="indent2">{`"id_order": "ORD-001",`}</span><br/>
+          <span className="indent2">{`"active": true`}</span><br/>
+          <span className="indent">{`}`}</span><br/>
+          <span className="bracket">{`}`}</span>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="filter-demo"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>🔄 Resultado del Filtrado:</h3>
+      
+      <div className="filter-process">
+        <div className="input-docs">
+          <h4>📥 3 Documentos de Entrada:</h4>
+          <div className="doc-item success">✅ ORD-001, quantity: 3, active: true</div>
+          <div className="doc-item success">✅ ORD-001, quantity: 2, active: true</div>
+          <div className="doc-item error">❌ ORD-002, quantity: 1, active: false</div>
+        </div>
+
+        <div className="arrow">→</div>
+
+        <div className="output-docs">
+          <h4>📤 2 Documentos Filtrados:</h4>
+          <div className="doc-item matched">🎯 ORD-001 | Chocolate Premium | Qty: 3</div>
+          <div className="doc-item matched">🎯 ORD-001 | Dulce de Leche | Qty: 2</div>
+        </div>
+      </div>
+
+      <div className="match-result">
+        <p><strong>✨ 2 líneas</strong> de la orden ORD-001 que están activas pasan al siguiente paso.</p>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const OrderDetailsLookupStepSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🔗 Paso 2: $lookup Avanzado con Variables
+    </motion.h2>
+
+    <motion.div 
+      className="step-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <h3>🚀 $lookup con $toObjectId y Variables:</h3>
+      <div className="operation-demo">
+        <div className="code-block">
+          <span className="bracket">{`{`}</span><br/>
+          <span className="indent">{`"$lookup": {`}</span><br/>
+          <span className="indent2">{`"from": "catalogs",`}</span><br/>
+          <span className="indent2">{`"let": {"product_id": {"$toObjectId": "$id_producto"}},`}</span><br/>
+          <span className="indent2">{`"pipeline": [`}</span><br/>
+          <span className="indent3">{`{"$match": {"$expr": {"$eq": ["$_id", "$$product_id"]}}}`}</span><br/>
+          <span className="indent2">{`],`}</span><br/>
+          <span className="indent2">{`"as": "product_info"`}</span><br/>
+          <span className="indent">{`}`}</span><br/>
+          <span className="bracket">{`}`}</span>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="lookup-explanation"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>🔍 Componentes Avanzados:</h3>
+      
+      <div className="lookup-components">
+        <div className="component">
+          <h4>🔧 let (Variables):</h4>
+          <p>Define variables que se pueden usar en el pipeline interno.</p>
+          <div className="example">
+            <code>{`{"$toObjectId": "$id_producto"}`}</code> → Convierte string a ObjectId
+          </div>
+        </div>
+
+        <div className="component">
+          <h4>⚡ pipeline interno:</h4>
+          <p>Sub-pipeline que se ejecuta en la colección destino.</p>
+          <div className="example">
+            <code>{`{"$expr": {"$eq": ["$_id", "$$product_id"]}}`}</code> → Comparación con variable
+          </div>
+        </div>
+
+        <div className="component">
+          <h4>📦 Resultado:</h4>
+          <p>Cada documento get un array "product_info" con la información del producto.</p>
+        </div>
+      </div>
+
+      <div className="lookup-result">
+        <h4>✨ Resultado del JOIN:</h4>
+        <div className="joined-data">
+          <div className="order-line">
+            <div className="line-info">Línea 1: Chocolate Premium (Qty: 3)</div>
+            <div className="product-info">+ product_info: [{`{"name": "Chocolate Premium", "cost": 150.00}`}]</div>
+          </div>
+          <div className="order-line">
+            <div className="line-info">Línea 2: Dulce de Leche (Qty: 2)</div>
+            <div className="product-info">+ product_info: [{`{"name": "Dulce de Leche", "cost": 75.00}`}]</div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const OrderDetailsAddFieldsStepSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🧮 Paso 3: $addFields con Cálculos Avanzados
+    </motion.h2>
+
+    <motion.div 
+      className="step-explanation"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <h3>💡 Campos Calculados:</h3>
+      <div className="operation-demo">
+        <div className="code-block">
+          <span className="bracket">{`{`}</span><br/>
+          <span className="indent">{`"$addFields": {`}</span><br/>
+          <span className="indent2">{`"product": {"$arrayElemAt": ["$product_info", 0]},`}</span><br/>
+          <span className="indent2">{`"product_price": {"$arrayElemAt": ["$product_info.cost", 0]},`}</span><br/>
+          <span className="indent2">{`"line_subtotal": {`}</span><br/>
+          <span className="indent3">{`"$cond": {`}</span><br/>
+          <span className="indent4">{`"if": {"$gt": [{"$size": "$product_info"}, 0]},`}</span><br/>
+          <span className="indent4">{`"then": {"$multiply": ["$quantity", {"$arrayElemAt": ["$product_info.cost", 0]}]},`}</span><br/>
+          <span className="indent4">{`"else": 0`}</span><br/>
+          <span className="indent3">{`}`}</span><br/>
+          <span className="indent2">{`}`}</span><br/>
+          <span className="indent">{`}`}</span><br/>
+          <span className="bracket">{`}`}</span>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="calculations-explanation"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>🔢 Explicación de Cálculos:</h3>
+      
+      <div className="calculation-steps">
+        <div className="calc-step">
+          <h4>1️⃣ Extraer Producto:</h4>
+          <div className="formula">
+            <code>{`{"$arrayElemAt": ["$product_info", 0]}`}</code>
+          </div>
+          <p>Obtiene el primer (y único) elemento del array product_info</p>
+        </div>
+
+        <div className="calc-step">
+          <h4>2️⃣ Extraer Precio:</h4>
+          <div className="formula">
+            <code>{`{"$arrayElemAt": ["$product_info.cost", 0]}`}</code>
+          </div>
+          <p>Extrae el precio del producto para usar en cálculos</p>
+        </div>
+
+        <div className="calc-step advanced">
+          <h4>3️⃣ Calcular Subtotal Condicional:</h4>
+          <div className="formula">
+            <code>$cond</code> → IF-THEN-ELSE logic
+          </div>
+          <div className="condition-logic">
+            <div className="if-part">
+              <strong>IF:</strong> <code>{`{"$size": "$product_info"} > 0`}</code>
+              <p>¿Hay información del producto?</p>
+            </div>
+            <div className="then-part">
+              <strong>THEN:</strong> <code>quantity × precio</code>
+              <p>Calcular subtotal normal</p>
+            </div>
+            <div className="else-part">
+              <strong>ELSE:</strong> <code>0</code>
+              <p>Producto no encontrado</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const OrderDetailsCalculationSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🧮 Demostración de Cálculos en Tiempo Real
+    </motion.h2>
+
+    <motion.div 
+      className="calculations-demo"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <h3>📊 Cálculo Paso a Paso:</h3>
+      
+      <div className="calculation-examples">
+        <div className="calc-example">
+          <h4>🍫 Línea 1: Chocolate Premium</h4>
+          <div className="calc-breakdown">
+            <div className="calc-input">
+              <div className="input-item">quantity: <span className="value">3</span></div>
+              <div className="input-item">product_price: <span className="value">150.00</span></div>
+              <div className="input-item">product_info.length: <span className="value">1</span> (✅ &gt; 0)</div>
+            </div>
+            
+            <div className="calc-process">
+              <div className="formula-step">
+                <span className="step">1.</span> IF condition: <code>1 &gt; 0</code> = <span className="result true">true</span>
+              </div>
+              <div className="formula-step">
+                <span className="step">2.</span> THEN: <code>3 × 150.00</code> = <span className="result">450.00</span>
+              </div>
+            </div>
+
+            <div className="calc-result success">
+              <strong>line_subtotal: 450.00</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="calc-example">
+          <h4>🍯 Línea 2: Dulce de Leche</h4>
+          <div className="calc-breakdown">
+            <div className="calc-input">
+              <div className="input-item">quantity: <span className="value">2</span></div>
+              <div className="input-item">product_price: <span className="value">75.00</span></div>
+              <div className="input-item">product_info.length: <span className="value">1</span> (✅ &gt; 0)</div>
+            </div>
+            
+            <div className="calc-process">
+              <div className="formula-step">
+                <span className="step">1.</span> IF condition: <code>1 &gt; 0</code> = <span className="result true">true</span>
+              </div>
+              <div className="formula-step">
+                <span className="step">2.</span> THEN: <code>2 × 75.00</code> = <span className="result">150.00</span>
+              </div>
+            </div>
+
+            <div className="calc-result success">
+              <strong>line_subtotal: 150.00</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="calc-example error-case">
+          <h4>❌ Caso de Error: Producto No Encontrado</h4>
+          <div className="calc-breakdown">
+            <div className="calc-input">
+              <div className="input-item">quantity: <span className="value">5</span></div>
+              <div className="input-item">product_info.length: <span className="value">0</span> (❌ = 0)</div>
+            </div>
+            
+            <div className="calc-process">
+              <div className="formula-step">
+                <span className="step">1.</span> IF condition: <code>0 &gt; 0</code> = <span className="result false">false</span>
+              </div>
+              <div className="formula-step">
+                <span className="step">2.</span> ELSE: <span className="result">0</span>
+              </div>
+            </div>
+
+            <div className="calc-result error">
+              <strong>line_subtotal: 0</strong> (Producto no encontrado)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="total-calculation">
+        <h4>📈 Total de la Orden:</h4>
+        <div className="total-breakdown">
+          <div className="total-line">Línea 1: <span>450.00</span></div>
+          <div className="total-line">Línea 2: <span>150.00</span></div>
+          <div className="total-separator"></div>
+          <div className="total-final">Total Orden: <span>600.00</span></div>
+        </div>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const OrderDetailsFinalResultSlide = () => (
+  <div className="slide-content">
+    <motion.h2 
+      initial={{ y: -30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      🎉 Resultado Final - Orden Completa con Cálculos
+    </motion.h2>
+
+    <motion.div 
+      className="pipeline-summary"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <h3>📋 Pipeline Completo Ejecutado:</h3>
+      <div className="pipeline-steps">
+        <div className="step">1️⃣ $match → Filtrar por orden activa</div>
+        <div className="step">2️⃣ $lookup → JOIN con productos usando variables</div>
+        <div className="step">3️⃣ $addFields → Cálculos automáticos de subtotales</div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="final-result"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <h3>✨ Resultado Final:</h3>
+      <div className="result-documents">
+        <div className="result-doc success">
+          <div className="field">_id: "507f1f77bcf86cd799439051"</div>
+          <div className="field">id_order: "ORD-001"</div>
+          <div className="field">id_producto: "507f1f77bcf86cd799439031"</div>
+          <div className="field">quantity: 3</div>
+          <div className="field highlight">product: {`{"name": "Chocolate Premium", "cost": 150.00}`}</div>
+          <div className="field highlight">product_price: 150.00</div>
+          <div className="field price">line_subtotal: 450.00</div>
+        </div>
+        
+        <div className="result-doc success">
+          <div className="field">_id: "507f1f77bcf86cd799439052"</div>
+          <div className="field">id_order: "ORD-001"</div>
+          <div className="field">id_producto: "507f1f77bcf86cd799439032"</div>
+          <div className="field">quantity: 2</div>
+          <div className="field highlight">product: {`{"name": "Dulce de Leche", "cost": 75.00}`}</div>
+          <div className="field highlight">product_price: 75.00</div>
+          <div className="field price">line_subtotal: 150.00</div>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="business-value"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7 }}
+    >
+      <h3>💼 Valor para el Negocio:</h3>
+      <div className="value-points">
+        <div className="value-point">
+          <span className="icon">⚡</span>
+          <div>
+            <strong>Cálculos en Tiempo Real:</strong>
+            <p>Subtotales actualizados automáticamente con precios actuales</p>
+          </div>
+        </div>
+        <div className="value-point">
+          <span className="icon">🛡️</span>
+          <div>
+            <strong>Manejo de Errores:</strong>
+            <p>Productos no encontrados no rompen el cálculo</p>
+          </div>
+        </div>
+        <div className="value-point">
+          <span className="icon">🚀</span>
+          <div>
+            <strong>Performance:</strong>
+            <p>Una sola operación de base de datos para todo el cálculo</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+
+    <motion.div 
+      className="success-message"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.9 }}
+    >
+      <p>🎯 ¡Pipeline completo para órdenes con cálculos automáticos y manejo robusto de datos!</p>
     </motion.div>
   </div>
 )
